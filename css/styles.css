@@ -966,6 +966,32 @@ h1 i {
   background: #263c56;
 }
 
+/* Imágenes en recuerdos */
+.memory-image-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.memory-image-preview img {
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+}
+
+.memory-photo {
+  width: 100%;
+  max-height: 290px;
+  object-fit: cover;
+  border-radius: 10px;
+  margin: 10px 0 6px;
+  border: 1px solid var(--line);
+  display: block;
+}
+
 .memory-card {
   align-items: flex-start;
 }
@@ -1466,11 +1492,9 @@ h1 i {
     margin-left: 57px;
   }
 
-  .memory-actions .complete-button {
-    margin-left: 0;
-  }
-
-  .link-history-actions .complete-button {
+  .memory-actions .complete-button,
+  .link-history-actions .complete-button,
+  .memory-image-preview .complete-button {
     margin-left: 0;
   }
 
