@@ -1022,6 +1022,49 @@ h1 i {
   color: var(--ink);
 }
 
+/* Historial de Enlaces en Panel Admin */
+.link-history-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  padding: 16px 18px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.link-history-info {
+  flex: 1;
+  min-width: 220px;
+}
+
+.link-history-info h3 {
+  font-size: 14px;
+  margin: 0 0 4px;
+}
+
+.link-history-meta {
+  font-size: 11px;
+  color: var(--muted);
+  margin: 0 0 6px;
+}
+
+.link-history-url {
+  display: block;
+  font-size: 11px;
+  font-family: monospace;
+  color: #477466;
+  word-break: break-all;
+}
+
+.link-history-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 /* Rewards & About */
 .reward-grid {
   display: grid;
@@ -1424,6 +1467,10 @@ h1 i {
   }
 
   .memory-actions .complete-button {
+    margin-left: 0;
+  }
+
+  .link-history-actions .complete-button {
     margin-left: 0;
   }
 
