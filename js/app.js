@@ -241,44 +241,7 @@ let spaceContext = getInitialSpaceContext();
 let currentStage = 0;
 let activeMemoryStage = "all";
 let editingMemoryId = null;
-
 let pendingMemoryImage = "";
-
-function compressImageFile(file, maxWidth = 900, quality = 0.75) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(new Error("No se pudo leer la imagen."));
-    reader.onload = () => {
-      const img = new Image();
-      img.onerror = () => reject(new Error("Archivo de imagen inválido."));
-      img.onload = () => {
-        const scale = Math.min(1, maxWidth / img.width);
-        const canvas = document.createElement("canvas");
-        canvas.width = Math.round(img.width * scale);
-        canvas.height = Math.round(img.height * scale);
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL("image/jpeg", quality));
-      };
-      img.src = String(reader.result);
-    };
-    reader.readAsDataURL(file);
-  });
-}
-
-function updateImagePreview(dataUrl) {
-  pendingMemoryImage = dataUrl || "";
-  const box = document.getElementById("memoryImagePreview");
-  const img = document.getElementById("memoryPreviewImg");
-  if (!box || !img) return;
-  if (pendingMemoryImage) {
-    img.src = pendingMemoryImage;
-    box.style.display = "flex";
-  } else {
-    img.src = "";
-    box.style.display = "none";
-  }
-}
 
 function getStorageKey() {
   return `nexo-space-${spaceContext.spaceId}`;
@@ -320,8 +283,14 @@ if (urlParams.get("subtitulo")) {
 }
 
 function saveState() {
-  localStorage.setItem(getStorageKey(), JSON.stringify(state));
-  renderAll();
+  try {
+    localStorage.setItem(getStorageKey(), JSON.stringify(state));
+    renderAll();
+    return true;
+  } catch (err) {
+    alert("El almacenamiento local del navegador está lleno. Descarga un respaldo (.json) y elimina recuerdos antiguos o fotos pesadas para liberar espacio.");
+    return false;
+  }
 }
 
 function escapeHTML(value) {
@@ -332,6 +301,43 @@ function escapeHTML(value) {
     '"': "&quot;",
     "'": "&#39;"
   }[c]));
+}
+
+/* Compresión y Vista Previa de Fotografías */
+function compressImageFile(file, maxWidth = 900, quality = 0.75) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("No se pudo leer la imagen."));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error("Archivo de imagen inválido."));
+      img.onload = () => {
+        const scale = Math.min(1, maxWidth / img.width);
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.src = String(reader.result);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function updateImagePreview(dataUrl) {
+  pendingMemoryImage = dataUrl || "";
+  const box = document.getElementById("memoryImagePreview");
+  const img = document.getElementById("memoryPreviewImg");
+  if (!box || !img) return;
+  if (pendingMemoryImage) {
+    img.src = pendingMemoryImage;
+    box.style.display = "flex";
+  } else {
+    img.src = "";
+    box.style.display = "none";
+  }
 }
 
 function applyPersonalBranding() {
@@ -639,9 +645,10 @@ function importBackupFromFile(file, fromOnboarding = false) {
       }
 
       resetMemoryFormState();
-      saveState();
-      applyPersonalBranding();
-      setBackupStatus("Respaldo importado correctamente");
+      if (saveState()) {
+        applyPersonalBranding();
+        setBackupStatus("Respaldo importado correctamente");
+      }
     } catch {
       alert("No se pudo leer el archivo JSON. Verifica que no esté dañado.");
     }
@@ -655,6 +662,8 @@ function resetMemoryFormState() {
   if (form) form.reset();
 
   editingMemoryId = null;
+  updateImagePreview("");
+
   const saveBtn = document.getElementById("saveMemoryBtn");
   const cancelBtn = document.getElementById("cancelEditBtn");
   const dateInput = document.getElementById("memoryDate");
@@ -673,6 +682,7 @@ function startEditingMemory(id) {
   document.getElementById("memoryDate").value = target.date || "";
   document.getElementById("memoryStage").value = String(target.stage ?? 0);
   document.getElementById("memoryText").value = target.text || "";
+  updateImagePreview(target.image || "");
 
   const saveBtn = document.getElementById("saveMemoryBtn");
   const cancelBtn = document.getElementById("cancelEditBtn");
@@ -744,6 +754,10 @@ function renderMemories() {
 
   list.innerHTML = [...filtered].reverse().map((m) => {
     const stageObj = stages[Number(m.stage)] || stages[0];
+    const photoHtml = m.image
+      ? `<img class="memory-photo" src="${escapeHTML(m.image)}" alt="${escapeHTML(m.title)}">`
+      : "";
+
     return `
       <article class="memory-card">
         <div class="memory-date">
@@ -757,6 +771,7 @@ function renderMemories() {
         </div>
         <div class="memory-body">
           <h3>${escapeHTML(m.title)}</h3>
+          ${photoHtml}
           <p>${escapeHTML(m.text || "Sin descripción.")}</p>
           <div class="memory-stage">${stageObj.icon} ${stageObj.name}</div>
         </div>
@@ -846,7 +861,7 @@ function buildWhatsappInviteText(name, url) {
     ``,
     `📌 *Recomendaciones rápidas:*`,
     `• Guarda este enlace en tus favoritos o en la pantalla de inicio de tu celular.`,
-    `• Tus recuerdos se guardan de forma privada en tu navegador.`,
+    `• Tus recuerdos y fotografías se guardan de forma privada en tu navegador.`,
     `• Puedes descargar una copia de seguridad (.json) en cualquier momento desde la sección *Mis recuerdos*.`
   ].join("\n");
 }
@@ -1041,6 +1056,26 @@ document.getElementById("importBackupInput")?.addEventListener("change", (e) => 
   input.value = "";
 });
 
+document.getElementById("memoryImageInput")?.addEventListener("change", async (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  try {
+    setBackupStatus("Optimizando fotografía...");
+    const compressed = await compressImageFile(file);
+    updateImagePreview(compressed);
+    setBackupStatus("Fotografía lista para guardar");
+  } catch {
+    alert("No se pudo procesar la imagen seleccionada.");
+    setBackupStatus("Guardado local activo");
+  }
+});
+
+document.getElementById("removeMemoryImageBtn")?.addEventListener("click", () => {
+  updateImagePreview("");
+  const imgInput = document.getElementById("memoryImageInput");
+  if (imgInput) imgInput.value = "";
+});
+
 document.getElementById("cancelEditBtn")?.addEventListener("click", resetMemoryFormState);
 
 document.getElementById("memoryForm")?.addEventListener("submit", (e) => {
@@ -1052,27 +1087,36 @@ document.getElementById("memoryForm")?.addEventListener("submit", (e) => {
   const dateVal = document.getElementById("memoryDate")?.value || "";
   const selectedStage = Number(document.getElementById("memoryStage")?.value || 0);
   const textVal = document.getElementById("memoryText")?.value.trim() || "";
+  const imageVal = pendingMemoryImage || "";
 
   if (editingMemoryId) {
+    const previous = [...state.memories];
     state.memories = state.memories.map((m) => (
       String(m.id) === String(editingMemoryId)
-        ? { ...m, title, date: dateVal, stage: selectedStage, text: textVal }
+        ? { ...m, title, date: dateVal, stage: selectedStage, text: textVal, image: imageVal }
         : m
     ));
-    saveState();
-    resetMemoryFormState();
-    setBackupStatus("Recuerdo actualizado");
+    if (saveState()) {
+      resetMemoryFormState();
+      setBackupStatus("Recuerdo actualizado");
+    } else {
+      state.memories = previous;
+    }
   } else {
     state.memories.push({
       id: Date.now().toString(),
       title,
       date: dateVal,
       stage: selectedStage,
-      text: textVal
+      text: textVal,
+      image: imageVal
     });
-    saveState();
-    resetMemoryFormState();
-    setBackupStatus("Recuerdo guardado");
+    if (saveState()) {
+      resetMemoryFormState();
+      setBackupStatus("Recuerdo guardado");
+    } else {
+      state.memories.pop();
+    }
   }
 
   showView("memories");
@@ -1245,7 +1289,7 @@ if (initialDateInput) {
   initialDateInput.value = new Date().toISOString().slice(0, 10);
 }
 
-document.getElementById("year").textContent = new Date().getFullYear();
+document.getElementById("anio").textContent = new Date().getFullYear();
 
 applyPersonalBranding();
 renderAll();
