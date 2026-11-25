@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#101827">
+  <meta name="description" content="NEXO: tu vida, tu historia, tu universo.">
+  <title>NEXO — Mi universo</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <!-- Pantalla de Bienvenida (si entra sin enlace personalizado) -->
+  <div class="onboarding-overlay" id="onboardingOverlay" style="display: none;">
+    <div class="onboarding-card">
+      <div class="brand-mark onboarding-logo">✦</div>
+      <p class="eyebrow">BIENVENIDO A NEXO</p>
+      <h1>Tu vida. Tu historia.<br><em>Tu universo.</em></h1>
+      <p class="intro">Crea tu espacio personal privado en este dispositivo para conservar tus recuerdos, explorar tus etapas y avanzar a tu propio ritmo.</p>
+
+      <form id="onboardingForm" class="onboarding-form">
+        <label for="onboardingName">¿Cómo te llamas o cómo quieres titular tu espacio?</label>
+        <input id="onboardingName" maxlength="45" placeholder="Ej. Elena García o Familia Herrera" required>
+
+        <label for="onboardingSubtitle">Subtítulo personal (opcional)</label>
+        <input id="onboardingSubtitle" maxlength="60" placeholder="Ej. Mis recuerdos y aprendizajes">
+
+        <button class="primary-button onboarding-submit" type="submit">✦ Comenzar mi universo</button>
+      </form>
+
+      <div class="onboarding-divider"><span>o si ya tienes un respaldo</span></div>
+
+      <label class="complete-button onboarding-import" for="onboardingImportInput">
+        ⬆ Cargar respaldo (.json)
+      </label>
+      <input id="onboardingImportInput" type="file" accept=".json,application/json" hidden>
+    </div>
+  </div>
+
+  <div class="app-shell" id="appShell">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="#" aria-label="NEXO inicio">
+        <span class="brand-mark">✦</span>
+        <span>NEXO<small>MI UNIVERSO</small></span>
+      </a>
+
+      <div class="profile-mini">
+        <div class="avatar" id="profileAvatar">N</div>
+        <div>
+          <strong id="profileName">Mi espacio</strong>
+          <small id="profileSubtitle">Mi historia personal</small>
+        </div>
+      </div>
+
+      <nav class="main-nav" aria-label="Navegación principal">
+        <button class="nav-link active" data-view="universe" type="button"><span>⌂</span> Mi universo</button>
+        <button class="nav-link" data-view="missions" type="button"><span>◇</span> Mis misiones</button>
+        <button class="nav-link" data-view="memories" type="button"><span>▧</span> Mis recuerdos</button>
+        <button class="nav-link" data-view="rewards" type="button"><span>✧</span> Mis recompensas</button>
+        <!-- Botón visible solo en modo ?admin=1 -->
+        <button class="nav-link admin-only" id="navAdminBtn" data-view="generator" type="button" style="display: none;">
+          <span>🔗</span> Generar enlace
+        </button>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <div class="privacy-note">
+          <span>🔒</span>
+          <p>
+            <strong>Espacio privado</strong><br>
+            Los recuerdos de <span id="privacyOwner">este espacio</span> se guardan localmente en este navegador.
+          </p>
+        </div>
+        <button class="nav-link" data-view="about" type="button"><span>ⓘ</span> Acerca de NEXO</button>
+      </div>
+    </aside>
+
+    <!-- Contenido Principal -->
+    <main class="main-content">
+      <header class="topbar">
+        <button class="mobile-menu" id="mobileMenu" aria-label="Abrir menú" type="button">☰</button>
+        <div class="breadcrumb"><span id="crumbOwner">MI ESPACIO</span> <span>/</span> <strong id="crumb">MI UNIVERSO</strong></div>
+        <div class="top-actions">
+          <span class="status-dot"></span>
+          <span>Tu mundo, a tu ritmo</span>
+        </div>
+      </header>
+
+      <!-- Vista: Mi Universo -->
+      <section class="view active" id="view-universe">
+        <div class="welcome-row">
+          <div>
+            <p class="eyebrow" id="welcomeEyebrow">UN VIAJE QUE TE PERTENECE</p>
+            <h1>
+              <span id="welcomeHeadline">Tu vida. Tu historia.</span> <i>NEXO Cada vida tiene una historia. Cada historia merece ser recordada.</i>
+              <br>
+              <em>Tu universo.</em> <i>Un universo para descubrir, vivir, aprender y conservar nuestra historia.</i>
+            </h1>
+            <p class="intro">Cada recuerdo es una estrella. Cada experiencia, un nuevo camino.</p>
+          </div>
+          <div class="date-chip"><span>✦</span> UN DÍA A LA VEZ</div>
+        </div>
+
+        <section class="universe-card">
+          <div class="universe-heading">
+            <div>
+              <span class="eyebrow light">MAPA DE TU VIDA</span>
+              <h2>El Árbol de la Vida</h2>
+            </div>
+            <span class="map-label">6 territorios · 1 historia</span>
+          </div>
+
+          <div class="tree-scene">
+            <img class="tree-bg-image" src="img/arbol-vida.jpg" alt="El Árbol de la Vida" onerror="this.style.display='none'">
+            <div class="orbit orbit-one"></div>
+            <div class="orbit orbit-two"></div>
+            <div class="tree-glow"></div>
+            <div class="tree-caption">Todo comienza con una historia</div>
+            <span class="spark spark-a">✦</span>
+            <span class="spark spark-b">·</span>
+            <span class="spark spark-c">✧</span>
+          </div>
+
+          <div class="map-footer">
+            <span><i class="legend-dot"></i> Explora cualquier etapa</span>
+            <span>Tu recorrido no tiene prisa</span>
+          </div>
+        </section>
+
+        <!-- Línea de vida de referencia -->
+        <section class="lifeline-section" aria-label="Línea de vida de referencia">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">REFERENCIA ORIENTATIVA</p>
+              <h2>Línea de vida</h2>
+            </div>
+            <span class="muted">Guía flexible por etapas</span>
+          </div>
+          <div class="lifeline-track" id="lifelineTrack"></div>
+        </section>
+
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">TU RECORRIDO</p>
+            <h2>Explora tus etapas</h2>
+          </div>
+          <span class="muted" id="stage-count">0 de 6 exploradas</span>
+        </div>
+
+        <div class="stage-grid" id="stageGrid"></div>
+
+        <section class="progress-panel">
+          <div>
+            <p class="eyebrow">TU CAMINO</p>
+            <h2>Todo lo que vas construyendo</h2>
+            <p class="muted">No hay carreras ni comparaciones. Cada paso cuenta.</p>
+          </div>
+          <div class="progress-stats">
+            <div>
+              <strong id="memoryCount">0</strong>
+              <span>Recuerdos</span>
+            </div>
+            <div>
+              <strong id="missionCount">0</strong>
+              <span>Misiones</span>
+            </div>
+            <div>
+              <strong id="rewardCount">0</strong>
+              <span>Insignias</span>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <!-- Vista: Mis Misiones -->
+      <section class="view" id="view-missions">
+        <div class="page-heading">
+          <p class="eyebrow">PEQUEÑOS PASOS, GRANDES HISTORIAS</p>
+          <h1>Mis misiones</h1>
+          <p class="intro">Actividades opcionales para descubrir, recordar y crear.</p>
+        </div>
+
+        <div class="filter-row" id="missionFilters">
+          <button class="filter active" data-filter="all" type="button">Todas</button>
+          <button class="filter" data-filter="memory" type="button">Memoria</button>
+          <button class="filter" data-filter="discovery" type="button">Descubrimiento</button>
+          <button class="filter" data-filter="learning" type="button">Aprendizaje</button>
+          <button class="filter" data-filter="dream" type="button">Sueños</button>
+        </div>
+
+        <div class="mission-list" id="missionList"></div>
+      </section>
+
+      <!-- Vista: Mis Recuerdos -->
+      <section class="view" id="view-memories">
+        <div class="page-heading">
+          <p class="eyebrow">FRAGMENTOS DE TU HISTORIA</p>
+          <h1>Mis recuerdos</h1>
+          <p class="intro">Guarda momentos que quieras conservar. Puedes volver a ellos cuando quieras.</p>
+        </div>
+
+        <!-- Barra de Respaldo -->
+        <div class="backup-toolbar" aria-label="Respaldo de datos">
+          <button class="complete-button" id="exportBackupBtn" type="button">⬇ Exportar respaldo (.json)</button>
+          <label class="complete-button backup-import-label" for="importBackupInput">
+            ⬆ Importar respaldo
+          </label>
+          <input id="importBackupInput" type="file" accept=".json,application/json" hidden>
+          <span class="muted" id="backupStatus">Guardado local activo</span>
+        </div>
+
+        <form class="memory-form" id="memoryForm">
+          <label for="memoryTitle">Título del recuerdo</label>
+          <input id="memoryTitle" maxlength="80" placeholder="Ej. Un día que quiero recordar" required>
+
+          <div class="form-row">
+            <div>
+              <label for="memoryDate">Fecha</label>
+              <input id="memoryDate" type="date">
+            </div>
+            <div>
+              <label for="memoryStage">Etapa relacionada</label>
+              <select id="memoryStage">
+                <option value="0">El origen</option>
+                <option value="1">Los descubrimientos</option>
+                <option value="2">Mi identidad</option>
+                <option value="3">Mis sueños</option>
+                <option value="4">La sabiduría</option>
+                <option value="5">Mi legado</option>
+              </select>
+            </div>
+          </div>
+
+          <label for="memoryText">Cuéntalo con tus palabras</label>
+          <textarea id="memoryText" rows="4" maxlength="1500" placeholder="¿Qué pasó? ¿Qué te gustaría recordar de este momento?"></textarea>
+
+          <div class="form-actions">
+            <button class="primary-button" id="saveMemoryBtn" type="submit">＋ Guardar recuerdo</button>
+            <button class="complete-button" id="cancelEditBtn" type="button" style="display: none;">Cancelar edición</button>
+          </div>
+        </form>
+
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">TU COLECCIÓN</p>
+            <h2>La línea de tus recuerdos</h2>
+          </div>
+          <span class="muted" id="memoryFilterCount"></span>
+        </div>
+
+        <div class="filter-row" id="memoryFilters" aria-label="Filtrar recuerdos por etapa">
+          <button class="filter active" data-stage-filter="all" type="button">Todas las etapas</button>
+        </div>
+
+        <div class="memory-list" id="memoryList"></div>
+      </section>
+
+      <!-- Vista: Mis Recompensas -->
+      <section class="view" id="view-rewards">
+        <div class="page-heading">
+          <p class="eyebrow">CADA PASO DEJA UNA HUELLA</p>
+          <h1>Mis recompensas</h1>
+          <p class="intro">Insignias simbólicas por las experiencias que decides registrar.</p>
+        </div>
+
+        <div class="reward-grid" id="rewardGrid"></div>
+
+        <div class="gentle-note">
+          Las recompensas celebran tu recorrido; no miden tu valor ni te comparan con nadie.
+        </div>
+      </section>
+
+      <!-- Vista: Generador de Enlaces (Solo visible con ?admin=1) -->
+      <section class="view" id="view-generator">
+        <div class="page-heading">
+          <p class="eyebrow">PANEL DE ANFITRIÓN</p>
+          <h1>Generador de enlaces personales</h1>
+          <p class="intro">Crea un enlace único para un familiar o cliente. Al abrirlo, su espacio llevará su nombre y guardará sus propios datos por separado.</p>
+        </div>
+
+        <form class="memory-form" id="linkGeneratorForm">
+          <label for="genPersonName">Nombre de la persona o familia</label>
+          <input id="genPersonName" maxlength="45" placeholder="Ej. Tía Elena o Carlos Mendoza" required>
+
+          <label for="genPersonSubtitle">Subtítulo del espacio (opcional)</label>
+          <input id="genPersonSubtitle" maxlength="60" placeholder="Ej. Mi historia y recuerdos familiares">
+
+          <label for="genCustomSlug">Identificador único (se genera solo, puedes editarlo)</label>
+          <input id="genCustomSlug" maxlength="40" placeholder="ej. tia-elena-2026" required>
+
+          <button class="primary-button" type="submit">🔗 Generar enlace personalizado</button>
+        </form>
+
+        <div class="generated-link-box" id="generatedLinkBox" style="display: none;">
+          <p class="eyebrow">ENLACE LISTO PARA COMPARTIR</p>
+          <input id="generatedUrlOutput" readonly>
+          <div class="form-actions" style="margin-top: 12px;">
+            <button class="primary-button" id="copyGeneratedUrl" type="button">📋 Copiar enlace</button>
+            <a class="complete-button" id="openGeneratedUrl" href="#" target="_blank" rel="noopener">↗ Abrir vista previa</a>
+            <span class="muted" id="copyStatus"></span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Vista: Acerca de NEXO -->
+      <section class="view" id="view-about">
+        <div class="page-heading">
+          <p class="eyebrow">UNA IDEA PARA ACOMPAÑAR LA VIDA</p>
+          <h1>Acerca de NEXO</h1>
+        </div>
+
+        <div class="about-card">
+          <div class="about-star">✦</div>
+          <h2>Tu historia te pertenece.</h2>
+          <p>NEXO es un espacio personal para registrar recuerdos, explorar etapas, reconocer aprendizajes y conservar aquello que consideras importante.</p>
+          <p>Cada espacio personal funciona de manera privada en este navegador y permite descargar respaldos en formato JSON para conservar o trasladar tu historia en cualquier momento.</p>
+        </div>
+      </section>
+
+      <!-- Footer -->
+      <footer class="footer">
+        NEXO · Tu vida, tu historia, tu universo
+        <span>Hecho para avanzar a tu propio ritmo.</span>
+      </footer>
+    </main>
+  </div>
+
+  <!-- Modal de Etapa -->
+  <div class="modal-backdrop" id="stageModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <button class="modal-close" id="closeModal" aria-label="Cerrar" type="button">×</button>
+      <img class="modal-banner" id="modalBanner" src="" alt="" onerror="this.style.display='none'">
+      <div class="modal-icon" id="modalIcon">🌱</div>
+      <p class="eyebrow" id="modalEyebrow">ETAPA 01</p>
+      <h2 id="modalTitle">El origen</h2>
+      <p class="modal-reference" id="modalReference"></p>
+      <p id="modalDescription" class="modal-description"></p>
+
+      <div class="modal-milestones">
+        <strong>Hitos orientativos (ideas para recordar)</strong>
+        <ul id="modalMilestones"></ul>
+      </div>
+
+      <div class="modal-mission">
+        <strong>Una misión para comenzar</strong>
+        <p id="modalMission"></p>
+      </div>
+
+      <div class="modal-actions">
+        <button class="primary-button" id="exploreMission" type="button">Ver misiones</button>
+        <button class="complete-button" id="addMemoryFromStage" type="button">＋ Guardar recuerdo aquí</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
