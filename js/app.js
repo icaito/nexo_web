@@ -273,7 +273,6 @@ function loadState() {
 
 let state = loadState();
 
-// Si vino un nombre explícito en la URL, actualizamos el perfil guardado
 if (urlParams.get("nombre")) {
   state.profile.name = urlParams.get("nombre").trim();
 }
@@ -319,13 +318,11 @@ function applyPersonalBranding() {
     welcomeEyebrowEl.textContent = `EL UNIVERSO DE ${name.toUpperCase()}`;
   }
 
-  // Mostrar herramienta de anfitrión si ?admin=1 está activo
   const adminBtn = document.getElementById("navAdminBtn");
   if (adminBtn && isAdminMode) {
     adminBtn.style.display = "flex";
   }
 
-  // Mostrar pantalla de bienvenida si entró sin enlace y sin espacio previo
   const overlay = document.getElementById("onboardingOverlay");
   if (overlay) {
     overlay.style.display = spaceContext.needsOnboarding ? "flex" : "none";
@@ -431,6 +428,22 @@ function openStage(index) {
 
 function closeModal() {
   const modal = document.getElementById("stageModal");
+  if (!modal) return;
+  modal.classList.remove("open");
+  modal.setAttribute("aria-hidden", "true");
+}
+
+/* Modal de Guía Rápida para Clientes */
+function openGuideModal() {
+  const modal = document.getElementById("guideModal");
+  if (!modal) return;
+  modal.classList.add("open");
+  modal.setAttribute("aria-hidden", "false");
+  document.getElementById("sidebar")?.classList.remove("open");
+}
+
+function closeGuideModal() {
+  const modal = document.getElementById("guideModal");
   if (!modal) return;
   modal.classList.remove("open");
   modal.setAttribute("aria-hidden", "true");
@@ -810,8 +823,24 @@ document.getElementById("stageModal")?.addEventListener("click", (e) => {
   if (e.target.id === "stageModal") closeModal();
 });
 
+document.getElementById("openGuideBtn")?.addEventListener("click", openGuideModal);
+document.getElementById("closeGuideModal")?.addEventListener("click", closeGuideModal);
+document.getElementById("guideDoneBtn")?.addEventListener("click", closeGuideModal);
+
+document.getElementById("guideModal")?.addEventListener("click", (e) => {
+  if (e.target.id === "guideModal") closeGuideModal();
+});
+
+document.getElementById("guideGoBackupBtn")?.addEventListener("click", () => {
+  closeGuideModal();
+  showView("memories");
+});
+
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") closeModal();
+  if (e.key === "Escape") {
+    closeModal();
+    closeGuideModal();
+  }
 });
 
 document.getElementById("exploreMission")?.addEventListener("click", () => {
@@ -927,7 +956,8 @@ document.getElementById("genPersonName")?.addEventListener("input", (e) => {
   const slugInput = document.getElementById("genCustomSlug");
   if (!slugInput) return;
   const baseSlug = sanitizeSlug(e.target.value);
-  slugInput.value = baseSlug ? `${baseSlug}-${new Date().getFullYear()}` : "";
+  const randomCode = Math.floor(100 + Math.random() * 900);
+  slugInput.value = baseSlug ? `${baseSlug}-${randomCode}` : "";
 });
 
 document.getElementById("linkGeneratorForm")?.addEventListener("submit", (e) => {
@@ -969,6 +999,32 @@ document.getElementById("copyGeneratedUrl")?.addEventListener("click", async () 
     output.select();
     document.execCommand("copy");
     if (copyStatus) copyStatus.textContent = "✓ Enlace seleccionado y copiado";
+  }
+});
+
+document.getElementById("copyWhatsappInvite")?.addEventListener("click", async () => {
+  const name = document.getElementById("genPersonName")?.value.trim() || "Hola";
+  const url = document.getElementById("generatedUrlOutput")?.value;
+  const copyStatus = document.getElementById("copyStatus");
+  if (!url) return;
+
+  const inviteText = [
+    `✦ *Bienvenido/a a tu universo NEXO, ${name}*`,
+    ``,
+    `Aquí tienes el enlace privado a tu espacio personal:`,
+    `${url}`,
+    ``,
+    `📌 *Recomendaciones rápidas:*`,
+    `• Guarda este enlace en tus favoritos o en la pantalla de inicio de tu celular.`,
+    `• Tus recuerdos se guardan de forma privada en tu navegador.`,
+    `• Puedes descargar una copia de seguridad (.json) en cualquier momento desde la sección *Mis recuerdos*.`
+  ].join("\n");
+
+  try {
+    await navigator.clipboard.writeText(inviteText);
+    if (copyStatus) copyStatus.textContent = "✓ Invitación completa copiada para WhatsApp";
+  } catch {
+    if (copyStatus) copyStatus.textContent = "No se pudo copiar automático; usa Copiar enlace.";
   }
 });
 
