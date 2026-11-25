@@ -289,7 +289,7 @@
           <label for="genCustomSlug">Identificador único (se genera solo, puedes editarlo)</label>
           <input id="genCustomSlug" maxlength="40" placeholder="ej. tia-elena-2026" required>
 
-          <button class="primary-button" type="submit">🔗 Generar enlace personalizado</button>
+          <button class="primary-button" type="submit">🔗 Generar y guardar enlace</button>
         </form>
 
         <div class="generated-link-box" id="generatedLinkBox" style="display: none;">
@@ -302,6 +302,26 @@
             <span class="muted" id="copyStatus"></span>
           </div>
         </div>
+
+        <!-- Historial de Enlaces Generados -->
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">CONTROL DE ANFITRIÓN</p>
+            <h2>Enlaces generados</h2>
+          </div>
+          <span class="muted" id="generatedLinksCount">0 registrados</span>
+        </div>
+
+        <div class="backup-toolbar" aria-label="Respaldo de enlaces">
+          <button class="complete-button" id="exportLinksBtn" type="button">⬇ Exportar lista (.json)</button>
+          <label class="complete-button backup-import-label" for="importLinksInput">
+            ⬆ Importar lista
+          </label>
+          <input id="importLinksInput" type="file" accept=".json,application/json" hidden>
+          <span class="muted" id="linksBackupStatus">Guardado en este navegador</span>
+        </div>
+
+        <div class="memory-list" id="generatedLinksList"></div>
       </section>
 
       <!-- Vista: Acerca de NEXO -->
