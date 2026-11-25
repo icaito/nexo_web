@@ -71,6 +71,7 @@
             Los recuerdos de <span id="privacyOwner">este espacio</span> se guardan localmente en este navegador.
           </p>
         </div>
+        <button class="nav-link" id="openGuideBtn" type="button"><span>❔</span> Guía y respaldo</button>
         <button class="nav-link" data-view="about" type="button"><span>ⓘ</span> Acerca de NEXO</button>
       </div>
     </aside>
@@ -296,6 +297,7 @@
           <input id="generatedUrlOutput" readonly>
           <div class="form-actions" style="margin-top: 12px;">
             <button class="primary-button" id="copyGeneratedUrl" type="button">📋 Copiar enlace</button>
+            <button class="complete-button" id="copyWhatsappInvite" type="button">💬 Copiar invitación para cliente</button>
             <a class="complete-button" id="openGeneratedUrl" href="#" target="_blank" rel="noopener">↗ Abrir vista previa</a>
             <span class="muted" id="copyStatus"></span>
           </div>
@@ -312,15 +314,16 @@
         <div class="about-card">
           <div class="about-star">✦</div>
           <h2>Tu historia te pertenece.</h2>
-          <p>NEXO es un espacio personal para registrar recuerdos, explorar etapas, reconocer aprendizajes y conservar aquello que consideras importante.</p>
-          <p>Cada espacio personal funciona de manera privada en este navegador y permite descargar respaldos en formato JSON para conservar o trasladar tu historia en cualquier momento.</p>
+          <p>NEXO es un espacio personal creado para registrar recuerdos, explorar etapas, reconocer aprendizajes y conservar aquello que consideras importante.</p>
+          <p>Cada espacio funciona de manera privada en este navegador y permite descargar respaldos en formato JSON para conservar o trasladar tu historia en cualquier momento.</p>
+          <p class="about-author">Diseñado y desarrollado por <strong>Ricardo Diosdado Herrera</strong>.</p>
         </div>
       </section>
 
       <!-- Footer -->
       <footer class="footer">
         NEXO · Tu vida, tu historia, tu universo
-        <span>Hecho para avanzar a tu propio ritmo.</span>
+        <span>Creado por Ricardo Diosdado Herrera · Hecho para avanzar a tu propio ritmo.</span>
       </footer>
     </main>
   </div>
@@ -349,6 +352,31 @@
       <div class="modal-actions">
         <button class="primary-button" id="exploreMission" type="button">Ver misiones</button>
         <button class="complete-button" id="addMemoryFromStage" type="button">＋ Guardar recuerdo aquí</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Guía Rápida para Clientes -->
+  <div class="modal-backdrop" id="guideModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="guideModalTitle">
+      <button class="modal-close" id="closeGuideModal" aria-label="Cerrar guía" type="button">×</button>
+      <div class="modal-icon">🧭</div>
+      <p class="eyebrow">GUÍA DE TU ESPACIO PERSONAL</p>
+      <h2 id="guideModalTitle">Cómo usar y proteger tu universo</h2>
+      <p class="modal-description">Tu espacio en NEXO está diseñado para ser privado, sencillo y totalmente tuyo.</p>
+
+      <div class="modal-milestones">
+        <strong>3 cosas importantes sobre tu espacio:</strong>
+        <ul>
+          <li><strong>Guarda tu enlace personal:</strong> Ábrelo siempre desde el enlace único que recibiste (puedes agregarlo a favoritos o a la pantalla de inicio de tu celular).</li>
+          <li><strong>Privacidad total:</strong> Tus recuerdos y avances se guardan directamente en este navegador; nadie más tiene acceso a lo que escribes aquí.</li>
+          <li><strong>Respalda tu historia:</strong> En la sección <em>Mis recuerdos</em> usa el botón <strong>Exportar respaldo (.json)</strong> para guardar una copia en tu correo o nube, o para pasar tus datos si cambias de teléfono.</li>
+        </ul>
+      </div>
+
+      <div class="modal-actions" style="margin-top: 18px;">
+        <button class="primary-button" id="guideGoBackupBtn" type="button">Ir a Mis recuerdos y respaldos</button>
+        <button class="complete-button" id="guideDoneBtn" type="button">Entendido</button>
       </div>
     </div>
   </div>
