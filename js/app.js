@@ -190,6 +190,7 @@ const rewards = [
 
 /* Gestión de Espacio Personal y Parámetros de Enlace */
 const LAST_SPACE_KEY = "nexo-last-space-id";
+const ADMIN_LINKS_KEY = "nexo-admin-generated-links";
 const urlParams = new URLSearchParams(window.location.search);
 const isAdminMode = urlParams.get("admin") === "1";
 
@@ -774,12 +775,134 @@ function renderStats() {
   if (rewEl) rewEl.textContent = rewards.filter((r) => r.condition(state)).length;
 }
 
+/* Historial y Generador de Enlaces (?admin=1) */
+function loadGeneratedLinks() {
+  try {
+    const data = JSON.parse(localStorage.getItem(ADMIN_LINKS_KEY) || "[]");
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveGeneratedLinks(links) {
+  localStorage.setItem(ADMIN_LINKS_KEY, JSON.stringify(links));
+  renderGeneratedLinks();
+}
+
+function buildSpaceUrl({ slug, name, subtitle }) {
+  const baseUrl = `${window.location.origin}${window.location.pathname}`;
+  const params = new URLSearchParams();
+  params.set("id", slug);
+  params.set("nombre", name);
+  if (subtitle) params.set("subtitulo", subtitle);
+  return `${baseUrl}?${params.toString()}`;
+}
+
+function buildWhatsappInviteText(name, url) {
+  return [
+    `✦ *Bienvenido/a a tu universo NEXO, ${name}*`,
+    ``,
+    `Aquí tienes el enlace privado a tu espacio personal:`,
+    `${url}`,
+    ``,
+    `📌 *Recomendaciones rápidas:*`,
+    `• Guarda este enlace en tus favoritos o en la pantalla de inicio de tu celular.`,
+    `• Tus recuerdos se guardan de forma privada en tu navegador.`,
+    `• Puedes descargar una copia de seguridad (.json) en cualquier momento desde la sección *Mis recuerdos*.`
+  ].join("\n");
+}
+
+function renderGeneratedLinks() {
+  const list = document.getElementById("generatedLinksList");
+  const countEl = document.getElementById("generatedLinksCount");
+  if (!list) return;
+
+  const links = loadGeneratedLinks();
+  if (countEl) {
+    countEl.textContent = `${links.length} ${links.length === 1 ? "registrado" : "registrados"}`;
+  }
+
+  if (!links.length) {
+    list.innerHTML = '<div class="empty-state">Aún no has generado enlaces desde este navegador. Cuando crees uno, quedará guardado aquí para tu control.</div>';
+    return;
+  }
+
+  list.innerHTML = [...links].reverse().map((item) => {
+    const currentUrl = buildSpaceUrl(item);
+    const createdLabel = item.createdAt
+      ? new Date(item.createdAt).toLocaleDateString("es-MX", { day: "2-digit", month: "short", year: "numeric" })
+      : "";
+
+    return `
+      <article class="link-history-card">
+        <div class="link-history-info">
+          <h3>${escapeHTML(item.name)}</h3>
+          <p class="link-history-meta">
+            ID: <strong>${escapeHTML(item.slug)}</strong>
+            ${item.subtitle ? ` · ${escapeHTML(item.subtitle)}` : ""}
+            ${createdLabel ? ` · Creado: ${createdLabel}` : ""}
+          </p>
+          <span class="link-history-url">${escapeHTML(currentUrl)}</span>
+        </div>
+        <div class="link-history-actions">
+          <button class="complete-button" data-copy-link="${escapeHTML(item.slug)}" type="button">📋 Copiar URL</button>
+          <button class="complete-button" data-copy-invite="${escapeHTML(item.slug)}" type="button">💬 Invitación</button>
+          <button class="complete-button" data-load-link="${escapeHTML(item.slug)}" type="button">Cargar arriba</button>
+          <button class="complete-button" data-remove-link="${escapeHTML(item.slug)}" type="button">Quitar</button>
+        </div>
+      </article>
+    `;
+  }).join("");
+
+  list.querySelectorAll("[data-copy-link]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const target = loadGeneratedLinks().find((x) => x.slug === btn.dataset.copyLink);
+      if (!target) return;
+      await navigator.clipboard.writeText(buildSpaceUrl(target));
+      btn.textContent = "✓ Copiada";
+      setTimeout(() => { btn.textContent = "📋 Copiar URL"; }, 1800);
+    });
+  });
+
+  list.querySelectorAll("[data-copy-invite]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const target = loadGeneratedLinks().find((x) => x.slug === btn.dataset.copyInvite);
+      if (!target) return;
+      await navigator.clipboard.writeText(buildWhatsappInviteText(target.name, buildSpaceUrl(target)));
+      btn.textContent = "✓ Invitación copiada";
+      setTimeout(() => { btn.textContent = "💬 Invitación"; }, 1800);
+    });
+  });
+
+  list.querySelectorAll("[data-load-link]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const target = loadGeneratedLinks().find((x) => x.slug === btn.dataset.loadLink);
+      if (!target) return;
+      document.getElementById("genPersonName").value = target.name;
+      document.getElementById("genPersonSubtitle").value = target.subtitle || "";
+      document.getElementById("genCustomSlug").value = target.slug;
+      document.getElementById("genPersonName")?.focus();
+    });
+  });
+
+  list.querySelectorAll("[data-remove-link]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      if (confirm("¿Quitar este enlace de tu lista de control? (El enlace ya enviado seguirá funcionando para el usuario).")) {
+        const updated = loadGeneratedLinks().filter((x) => x.slug !== btn.dataset.removeLink);
+        saveGeneratedLinks(updated);
+      }
+    });
+  });
+}
+
 function renderAll() {
   renderLifeline();
   renderStages();
   renderMemories();
   renderRewards();
   renderStats();
+  renderGeneratedLinks();
 }
 
 /* Navegación y Eventos */
@@ -968,13 +1091,24 @@ document.getElementById("linkGeneratorForm")?.addEventListener("submit", (e) => 
 
   if (!name || !slug) return;
 
-  const baseUrl = `${window.location.origin}${window.location.pathname}`;
-  const params = new URLSearchParams();
-  params.set("id", slug);
-  params.set("nombre", name);
-  if (subtitle) params.set("subtitulo", subtitle);
+  const finalUrl = buildSpaceUrl({ slug, name, subtitle });
 
-  const finalUrl = `${baseUrl}?${params.toString()}`;
+  const links = loadGeneratedLinks();
+  const existingIndex = links.findIndex((item) => item.slug === slug);
+  const record = {
+    slug,
+    name,
+    subtitle,
+    createdAt: existingIndex >= 0 ? links[existingIndex].createdAt : new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+
+  if (existingIndex >= 0) {
+    links[existingIndex] = record;
+  } else {
+    links.push(record);
+  }
+  saveGeneratedLinks(links);
 
   const box = document.getElementById("generatedLinkBox");
   const output = document.getElementById("generatedUrlOutput");
@@ -984,7 +1118,7 @@ document.getElementById("linkGeneratorForm")?.addEventListener("submit", (e) => 
   if (box) box.style.display = "block";
   if (output) output.value = finalUrl;
   if (openLink) openLink.href = finalUrl;
-  if (copyStatus) copyStatus.textContent = "";
+  if (copyStatus) copyStatus.textContent = "✓ Guardado en tu lista de control";
 });
 
 document.getElementById("copyGeneratedUrl")?.addEventListener("click", async () => {
@@ -1008,24 +1142,63 @@ document.getElementById("copyWhatsappInvite")?.addEventListener("click", async (
   const copyStatus = document.getElementById("copyStatus");
   if (!url) return;
 
-  const inviteText = [
-    `✦ *Bienvenido/a a tu universo NEXO, ${name}*`,
-    ``,
-    `Aquí tienes el enlace privado a tu espacio personal:`,
-    `${url}`,
-    ``,
-    `📌 *Recomendaciones rápidas:*`,
-    `• Guarda este enlace en tus favoritos o en la pantalla de inicio de tu celular.`,
-    `• Tus recuerdos se guardan de forma privada en tu navegador.`,
-    `• Puedes descargar una copia de seguridad (.json) en cualquier momento desde la sección *Mis recuerdos*.`
-  ].join("\n");
-
   try {
-    await navigator.clipboard.writeText(inviteText);
+    await navigator.clipboard.writeText(buildWhatsappInviteText(name, url));
     if (copyStatus) copyStatus.textContent = "✓ Invitación completa copiada para WhatsApp";
   } catch {
     if (copyStatus) copyStatus.textContent = "No se pudo copiar automático; usa Copiar enlace.";
   }
+});
+
+document.getElementById("exportLinksBtn")?.addEventListener("click", () => {
+  const links = loadGeneratedLinks();
+  const payload = {
+    app: "NEXO-ADMIN-LINKS",
+    exportedAt: new Date().toISOString(),
+    links
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const dateStr = new Date().toISOString().slice(0, 10);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `nexo-enlaces-clientes-${dateStr}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+
+  const status = document.getElementById("linksBackupStatus");
+  if (status) status.textContent = `Lista exportada (${dateStr})`;
+});
+
+document.getElementById("importLinksInput")?.addEventListener("change", (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const parsed = JSON.parse(String(reader.result || "{}"));
+      const incoming = Array.isArray(parsed.links) ? parsed.links : [];
+      if (!incoming.length) {
+        alert("No se encontraron enlaces válidos en el archivo.");
+        return;
+      }
+      const current = loadGeneratedLinks();
+      const map = new Map(current.map((item) => [item.slug, item]));
+      incoming.forEach((item) => {
+        if (item?.slug && item?.name) map.set(item.slug, item);
+      });
+      saveGeneratedLinks(Array.from(map.values()));
+      const status = document.getElementById("linksBackupStatus");
+      if (status) status.textContent = "Lista de enlaces importada";
+    } catch {
+      alert("No se pudo leer el archivo JSON.");
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = "";
 });
 
 /* Inicialización */
