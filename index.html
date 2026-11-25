@@ -235,6 +235,13 @@
           <label for="memoryText">Cuéntalo con tus palabras</label>
           <textarea id="memoryText" rows="4" maxlength="1500" placeholder="¿Qué pasó? ¿Qué te gustaría recordar de este momento?"></textarea>
 
+          <label for="memoryImageInput">Fotografía del recuerdo (opcional — se optimiza automáticamente)</label>
+          <input id="memoryImageInput" type="file" accept="image/*">
+          <div class="memory-image-preview" id="memoryImagePreview" style="display: none;">
+            <img id="memoryPreviewImg" src="" alt="Vista previa del recuerdo">
+            <button class="complete-button" id="removeMemoryImageBtn" type="button">Quitar foto</button>
+          </div>
+
           <div class="form-actions">
             <button class="primary-button" id="saveMemoryBtn" type="submit">＋ Guardar recuerdo</button>
             <button class="complete-button" id="cancelEditBtn" type="button" style="display: none;">Cancelar edición</button>
@@ -343,8 +350,7 @@
       <!-- Footer -->
       <footer class="footer">
         NEXO · Tu vida, tu historia, tu universo
-        <span>Creado por ricodicaito engineer · Hecho para avanzar a tu propio ritmo.</span>
-        <p>&copy; <span id="year"></span> R.D.H. Todos los derechos reservados.</p>
+        <span>Creado por Ricardo Diosdado Herrera · Hecho para avanzar a tu propio ritmo.</span>
       </footer>
     </main>
   </div>
@@ -390,7 +396,7 @@
         <strong>3 cosas importantes sobre tu espacio:</strong>
         <ul>
           <li><strong>Guarda tu enlace personal:</strong> Ábrelo siempre desde el enlace único que recibiste (puedes agregarlo a favoritos o a la pantalla de inicio de tu celular).</li>
-          <li><strong>Privacidad total:</strong> Tus recuerdos y avances se guardan directamente en este navegador; nadie más tiene acceso a lo que escribes aquí.</li>
+          <li><strong>Privacidad total:</strong> Tus recuerdos, fotos y avances se guardan directamente en este navegador; nadie más tiene acceso a lo que escribes aquí.</li>
           <li><strong>Respalda tu historia:</strong> En la sección <em>Mis recuerdos</em> usa el botón <strong>Exportar respaldo (.json)</strong> para guardar una copia en tu correo o nube, o para pasar tus datos si cambias de teléfono.</li>
         </ul>
       </div>
