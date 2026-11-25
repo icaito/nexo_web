@@ -1207,6 +1207,8 @@ if (initialDateInput) {
   initialDateInput.value = new Date().toISOString().slice(0, 10);
 }
 
+document.getElementById("year").textContent = new Date().getFullYear();
+
 applyPersonalBranding();
 renderAll();
 renderMissions();
