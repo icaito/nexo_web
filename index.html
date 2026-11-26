@@ -5,16 +5,38 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#101827">
   <meta name="description" content="NEXO: tu vida, tu historia, tu universo.">
-  <title>Nexo-Web</title>
+  <meta property="og:title" content="NEXO — Tu vida, tu historia, tu universo">
+  <meta property="og:description" content="Un espacio privado para conservar tus recuerdos, explorar tus etapas y avanzar a tu propio ritmo.">
+  <meta property="og:image" content="https://icaito.github.io/nexo_web/img/arbol-vida.jpg">
+  <meta property="og:url" content="https://icaito.github.io/nexo_web/">
+  <meta property="og:type" content="website">
+  <title>Nexo_Web</title>
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
+  <!-- Pantalla de Bloqueo por PIN -->
+  <div class="onboarding-overlay" id="lockOverlay" style="display: none; z-index: 120;">
+    <div class="onboarding-card">
+      <div class="brand-mark onboarding-logo">🔐</div>
+      <p class="eyebrow">ESPACIO PROTEGIDO</p>
+      <h1 id="lockSpaceTitle">Mi espacio</h1>
+      <p class="intro">Ingresa tu PIN o contraseña personal para desbloquear tus recuerdos.</p>
+
+      <form id="unlockForm" class="onboarding-form">
+        <label for="unlockPinInput">PIN o contraseña</label>
+        <input id="unlockPinInput" type="password" autocomplete="current-password" maxlength="32" placeholder="Escribe tu PIN" required>
+        <p class="pin-error" id="unlockError" style="display: none;">El PIN ingresado no es correcto. Inténtalo de nuevo.</p>
+        <button class="primary-button onboarding-submit" type="submit">🔓 Desbloquear mi universo</button>
+      </form>
+    </div>
+  </div>
+
   <!-- Pantalla de Bienvenida (si entra sin enlace personalizado) -->
   <div class="onboarding-overlay" id="onboardingOverlay" style="display: none;">
     <div class="onboarding-card">
       <div class="brand-mark onboarding-logo">✦</div>
       <p class="eyebrow">BIENVENIDO A NEXO</p>
-      <h1>Tu vida. Tu historia.<br><em>Tu universo.<i>El juego de la vida</i></em></h1>
+      <h1>Tu vida. Tu historia.<br><em>Tu universo.</em></h1>
       <p class="intro">Crea tu espacio personal privado en este dispositivo para conservar tus recuerdos, explorar tus etapas y avanzar a tu propio ritmo.</p>
 
       <form id="onboardingForm" class="onboarding-form">
@@ -71,6 +93,7 @@
             Los recuerdos de <span id="privacyOwner">este espacio</span> se guardan localmente en este navegador.
           </p>
         </div>
+        <button class="nav-link" id="openPinSettingsBtn" type="button"><span>🔐</span> Seguridad / PIN</button>
         <button class="nav-link" id="openGuideBtn" type="button"><span>❔</span> Guía y respaldo</button>
         <button class="nav-link" data-view="about" type="button"><span>ⓘ</span> Acerca de NEXO</button>
       </div>
@@ -99,7 +122,7 @@
             </h1>
             <p class="intro">Cada recuerdo es una estrella. Cada experiencia, un nuevo camino.</p>
           </div>
-          <div class="date-chip"><span>✦</span> UN DÍA A LA VEZ</div>
+          <div class="date-chip"><span>✦</span> UN DÍA A LA VEZ-EL JUEGO DE LA VIDA</div>
         </div>
 
         <section class="universe-card">
@@ -283,7 +306,7 @@
         <div class="page-heading">
           <p class="eyebrow">PANEL DE ANFITRIÓN</p>
           <h1>Generador de enlaces personales</h1>
-          <p class="intro">Crea un enlace único para un familiar o cliente. Al abrirlo, su espacio llevará su nombre y guardará sus propios datos por separado.</p>
+          <p class="intro">Crea un enlace único para un familiar o cliente. Puedes asignar un PIN inicial de acceso que la persona podrá cambiar después dentro de su espacio.</p>
         </div>
 
         <form class="memory-form" id="linkGeneratorForm">
@@ -293,8 +316,16 @@
           <label for="genPersonSubtitle">Subtítulo del espacio (opcional)</label>
           <input id="genPersonSubtitle" maxlength="60" placeholder="Ej. Mi historia y recuerdos familiares">
 
-          <label for="genCustomSlug">Identificador único (se genera solo, puedes editarlo)</label>
-          <input id="genCustomSlug" maxlength="40" placeholder="ej. tia-elena-2026" required>
+          <div class="form-row">
+            <div>
+              <label for="genCustomSlug">Identificador único</label>
+              <input id="genCustomSlug" maxlength="40" placeholder="ej. tia-elena-2026" required>
+            </div>
+            <div>
+              <label for="genInitialPin">PIN inicial de acceso (opcional)</label>
+              <input id="genInitialPin" maxlength="20" placeholder="Ej. 2480 (el cliente podrá cambiarlo)">
+            </div>
+          </div>
 
           <button class="primary-button" type="submit">🔗 Generar y guardar enlace</button>
         </form>
@@ -350,8 +381,7 @@
       <!-- Footer -->
       <footer class="footer">
         NEXO · Tu vida, tu historia, tu universo
-        <span>Creado por ricodicaito-engineer · Hecho para avanzar a tu propio ritmo.</span>
-        <p>&copy; <span id="anio"></span> Mi Sitio Web R.D.H. Todos los derechos reservados.</p>
+        <span>Creado por Ricardo Diosdado Herrera · Hecho para avanzar a tu propio ritmo.</span>
       </footer>
     </main>
   </div>
@@ -384,6 +414,33 @@
     </div>
   </div>
 
+  <!-- Modal de Configuración de PIN del Usuario -->
+  <div class="modal-backdrop" id="pinModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="pinModalTitle">
+      <button class="modal-close" id="closePinModal" aria-label="Cerrar seguridad" type="button">×</button>
+      <div class="modal-icon">🔐</div>
+      <p class="eyebrow">PROTECCIÓN DE ACCESO</p>
+      <h2 id="pinModalTitle">PIN de tu espacio</h2>
+      <p class="modal-description" id="pinStatusText">Configura un PIN o contraseña para proteger el acceso a tus recuerdos en este navegador.</p>
+
+      <form class="onboarding-form" id="savePinForm">
+        <label for="newPinInput">Nuevo PIN o contraseña (mínimo 4 caracteres)</label>
+        <input id="newPinInput" type="password" minlength="4" maxlength="32" placeholder="Ej. 2480 o mi clave personal" required>
+
+        <label for="confirmPinInput">Confirma tu nuevo PIN</label>
+        <input id="confirmPinInput" type="password" minlength="4" maxlength="32" placeholder="Vuelve a escribirlo" required>
+
+        <p class="pin-error" id="savePinError" style="display: none;"></p>
+
+        <div class="modal-actions" style="margin-top: 14px;">
+          <button class="primary-button" type="submit">✓ Guardar PIN</button>
+          <button class="complete-button" id="lockNowBtn" type="button" style="display: none;">🔒 Bloquear ahora</button>
+          <button class="complete-button" id="removePinBtn" type="button" style="display: none;">Quitar PIN</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Modal de Guía Rápida para Clientes -->
   <div class="modal-backdrop" id="guideModal" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="guideModalTitle">
@@ -397,7 +454,7 @@
         <strong>3 cosas importantes sobre tu espacio:</strong>
         <ul>
           <li><strong>Guarda tu enlace personal:</strong> Ábrelo siempre desde el enlace único que recibiste (puedes agregarlo a favoritos o a la pantalla de inicio de tu celular).</li>
-          <li><strong>Privacidad total:</strong> Tus recuerdos, fotos y avances se guardan directamente en este navegador; nadie más tiene acceso a lo que escribes aquí.</li>
+          <li><strong>Protege tu acceso con PIN:</strong> En el menú lateral pulsa <em>Seguridad / PIN</em> para crear o cambiar tu contraseña personal cuando lo desees.</li>
           <li><strong>Respalda tu historia:</strong> En la sección <em>Mis recuerdos</em> usa el botón <strong>Exportar respaldo (.json)</strong> para guardar una copia en tu correo o nube, o para pasar tus datos si cambias de teléfono.</li>
         </ul>
       </div>
