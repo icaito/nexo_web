@@ -1,5 +1,5 @@
 
-# ✦ NEXO — Tu vida, tu historia, tu universo
+# ✦ NEXO — Tu vida, tu historia, tu universo, El juego de la vida...
 
 **NEXO** es una aplicación web personal interactiva diseñada para registrar recuerdos, explorar etapas de vida, completar misiones reflexivas y conservar historias personales de forma privada.
 
