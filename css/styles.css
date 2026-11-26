@@ -28,7 +28,7 @@ body {
   min-height: 100vh;
 }
 
-/* Pantalla de Bienvenida (Onboarding) */
+/* Pantalla de Bienvenida (Onboarding) y Bloqueo */
 .onboarding-overlay {
   position: fixed;
   inset: 0;
@@ -93,6 +93,13 @@ body {
 
 .onboarding-form input:focus {
   border-color: #8aafa2;
+}
+
+.pin-error {
+  margin: 4px 0 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: #b84242;
 }
 
 .onboarding-submit {
@@ -1494,7 +1501,8 @@ h1 i {
 
   .memory-actions .complete-button,
   .link-history-actions .complete-button,
-  .memory-image-preview .complete-button {
+  .memory-image-preview .complete-button,
+  .modal-actions .complete-button {
     margin-left: 0;
   }
 
