@@ -204,10 +204,29 @@ function sanitizeSlug(raw) {
     .slice(0, 40);
 }
 
+function encodePinParam(pin) {
+  if (!pin) return "";
+  try {
+    return btoa(unescape(encodeURIComponent(String(pin).trim())));
+  } catch {
+    return "";
+  }
+}
+
+function decodePinParam(encoded) {
+  if (!encoded) return "";
+  try {
+    return decodeURIComponent(escape(atob(String(encoded).trim())));
+  } catch {
+    return String(encoded).trim();
+  }
+}
+
 function getInitialSpaceContext() {
   const paramId = sanitizeSlug(urlParams.get("id"));
   const paramName = (urlParams.get("nombre") || "").trim();
   const paramSubtitle = (urlParams.get("subtitulo") || "").trim();
+  const paramPin = decodePinParam(urlParams.get("pin"));
 
   if (paramId) {
     localStorage.setItem(LAST_SPACE_KEY, paramId);
@@ -215,6 +234,7 @@ function getInitialSpaceContext() {
       spaceId: paramId,
       ownerName: paramName || "Mi espacio",
       ownerSubtitle: paramSubtitle || "Mi historia personal",
+      initialPin: paramPin,
       needsOnboarding: false
     };
   }
@@ -225,6 +245,7 @@ function getInitialSpaceContext() {
       spaceId: savedId,
       ownerName: "Mi espacio",
       ownerSubtitle: "Mi historia personal",
+      initialPin: "",
       needsOnboarding: false
     };
   }
@@ -233,6 +254,7 @@ function getInitialSpaceContext() {
     spaceId: "default",
     ownerName: "Mi espacio",
     ownerSubtitle: "Mi historia personal",
+    initialPin: "",
     needsOnboarding: !isAdminMode
   };
 }
@@ -242,6 +264,7 @@ let currentStage = 0;
 let activeMemoryStage = "all";
 let editingMemoryId = null;
 let pendingMemoryImage = "";
+let isSpaceUnlocked = false;
 
 function getStorageKey() {
   return `nexo-space-${spaceContext.spaceId}`;
@@ -250,15 +273,18 @@ function getStorageKey() {
 function loadState() {
   try {
     const raw = JSON.parse(localStorage.getItem(getStorageKey()) || "{}");
+    const hasCustomPin = Object.prototype.hasOwnProperty.call(raw, "pin");
     return {
       profile: {
         name: spaceContext.ownerName,
         subtitle: spaceContext.ownerSubtitle
       },
+      pin: hasCustomPin ? (raw.pin || "") : (spaceContext.initialPin || ""),
       memories: [],
       completed: [],
       explored: [],
-      ...raw
+      ...raw,
+      ...(hasCustomPin ? {} : { pin: spaceContext.initialPin || "" })
     };
   } catch {
     return {
@@ -266,6 +292,7 @@ function loadState() {
         name: spaceContext.ownerName,
         subtitle: spaceContext.ownerSubtitle
       },
+      pin: spaceContext.initialPin || "",
       memories: [],
       completed: [],
       explored: []
@@ -282,12 +309,17 @@ if (urlParams.get("subtitulo")) {
   state.profile.subtitle = urlParams.get("subtitulo").trim();
 }
 
+// Si el enlace trae un PIN inicial y aún no existía registro local, guardarlo
+if (spaceContext.initialPin && !localStorage.getItem(getStorageKey())) {
+  localStorage.setItem(getStorageKey(), JSON.stringify(state));
+}
+
 function saveState() {
   try {
     localStorage.setItem(getStorageKey(), JSON.stringify(state));
     renderAll();
     return true;
-  } catch (err) {
+  } catch {
     alert("El almacenamiento local del navegador está lleno. Descarga un respaldo (.json) y elimina recuerdos antiguos o fotos pesadas para liberar espacio.");
     return false;
   }
@@ -301,6 +333,58 @@ function escapeHTML(value) {
     '"': "&quot;",
     "'": "&#39;"
   }[c]));
+}
+
+/* Bloqueo y Configuración de PIN del Usuario */
+function checkLockScreen() {
+  const lockOverlay = document.getElementById("lockOverlay");
+  const lockTitle = document.getElementById("lockSpaceTitle");
+  if (!lockOverlay) return;
+
+  if (state.pin && !isSpaceUnlocked && !isAdminMode) {
+    if (lockTitle) lockTitle.textContent = state.profile?.name || "Mi espacio";
+    lockOverlay.style.display = "flex";
+    setTimeout(() => document.getElementById("unlockPinInput")?.focus(), 80);
+  } else {
+    lockOverlay.style.display = "none";
+  }
+}
+
+function openPinModal() {
+  const modal = document.getElementById("pinModal");
+  const statusText = document.getElementById("pinStatusText");
+  const removeBtn = document.getElementById("removePinBtn");
+  const lockNowBtn = document.getElementById("lockNowBtn");
+  const errEl = document.getElementById("savePinError");
+  if (!modal) return;
+
+  document.getElementById("savePinForm")?.reset();
+  if (errEl) errEl.style.display = "none";
+
+  if (state.pin) {
+    if (statusText) {
+      statusText.textContent = "Tu espacio ya tiene un PIN activo. Escribe uno nuevo si deseas cambiarlo, o quítalo cuando quieras.";
+    }
+    if (removeBtn) removeBtn.style.display = "inline-block";
+    if (lockNowBtn) lockNowBtn.style.display = "inline-block";
+  } else {
+    if (statusText) {
+      statusText.textContent = "Tu espacio aún no tiene PIN. Crea uno de al menos 4 caracteres para proteger el acceso en este navegador.";
+    }
+    if (removeBtn) removeBtn.style.display = "none";
+    if (lockNowBtn) lockNowBtn.style.display = "none";
+  }
+
+  modal.classList.add("open");
+  modal.setAttribute("aria-hidden", "false");
+  document.getElementById("sidebar")?.classList.remove("open");
+}
+
+function closePinModal() {
+  const modal = document.getElementById("pinModal");
+  if (!modal) return;
+  modal.classList.remove("open");
+  modal.setAttribute("aria-hidden", "true");
 }
 
 /* Compresión y Vista Previa de Fotografías */
@@ -372,6 +456,8 @@ function applyPersonalBranding() {
   if (overlay) {
     overlay.style.display = spaceContext.needsOnboarding ? "flex" : "none";
   }
+
+  checkLockScreen();
 }
 
 /* Renderizado de Línea de Vida y Etapas */
@@ -591,6 +677,7 @@ function importBackupFromFile(file, fromOnboarding = false) {
           spaceId: importedId,
           ownerName: incoming.profile?.name || "Mi espacio",
           ownerSubtitle: incoming.profile?.subtitle || "Mi historia personal",
+          initialPin: incoming.pin || "",
           needsOnboarding: false
         };
         localStorage.setItem(LAST_SPACE_KEY, importedId);
@@ -599,10 +686,12 @@ function importBackupFromFile(file, fromOnboarding = false) {
             name: spaceContext.ownerName,
             subtitle: spaceContext.ownerSubtitle
           },
+          pin: incoming.pin || "",
           memories: incoming.memories,
           completed: Array.isArray(incoming.completed) ? incoming.completed : [],
           explored: Array.isArray(incoming.explored) ? incoming.explored : []
         };
+        isSpaceUnlocked = true;
         saveState();
         applyPersonalBranding();
         return;
@@ -615,6 +704,7 @@ function importBackupFromFile(file, fromOnboarding = false) {
       if (replaceMode) {
         state = {
           profile: incoming.profile || state.profile,
+          pin: Object.prototype.hasOwnProperty.call(incoming, "pin") ? incoming.pin : state.pin,
           memories: incoming.memories,
           completed: Array.isArray(incoming.completed) ? incoming.completed : [],
           explored: Array.isArray(incoming.explored) ? incoming.explored : []
@@ -843,27 +933,37 @@ function saveGeneratedLinks(links) {
   renderGeneratedLinks();
 }
 
-function buildSpaceUrl({ slug, name, subtitle }) {
+function buildSpaceUrl({ slug, name, subtitle, initialPin }) {
   const baseUrl = `${window.location.origin}${window.location.pathname}`;
   const params = new URLSearchParams();
   params.set("id", slug);
   params.set("nombre", name);
   if (subtitle) params.set("subtitulo", subtitle);
+  if (initialPin) params.set("pin", encodePinParam(initialPin));
   return `${baseUrl}?${params.toString()}`;
 }
 
-function buildWhatsappInviteText(name, url) {
-  return [
+function buildWhatsappInviteText(name, url, initialPin) {
+  const lines = [
     `✦ *Bienvenido/a a tu universo NEXO, ${name}*`,
     ``,
     `Aquí tienes el enlace privado a tu espacio personal:`,
-    `${url}`,
+    `${url}`
+  ];
+
+  if (initialPin) {
+    lines.push(``, `🔐 *Tu PIN inicial de acceso:* \`${initialPin}\` (puedes cambiarlo cuando quieras desde el botón *Seguridad / PIN* dentro de tu espacio).`);
+  }
+
+  lines.push(
     ``,
     `📌 *Recomendaciones rápidas:*`,
     `• Guarda este enlace en tus favoritos o en la pantalla de inicio de tu celular.`,
     `• Tus recuerdos y fotografías se guardan de forma privada en tu navegador.`,
     `• Puedes descargar una copia de seguridad (.json) en cualquier momento desde la sección *Mis recuerdos*.`
-  ].join("\n");
+  );
+
+  return lines.join("\n");
 }
 
 function renderGeneratedLinks() {
@@ -893,6 +993,7 @@ function renderGeneratedLinks() {
           <h3>${escapeHTML(item.name)}</h3>
           <p class="link-history-meta">
             ID: <strong>${escapeHTML(item.slug)}</strong>
+            ${item.initialPin ? ` · 🔐 PIN inicial: <strong>${escapeHTML(item.initialPin)}</strong>` : ""}
             ${item.subtitle ? ` · ${escapeHTML(item.subtitle)}` : ""}
             ${createdLabel ? ` · Creado: ${createdLabel}` : ""}
           </p>
@@ -922,7 +1023,7 @@ function renderGeneratedLinks() {
     btn.addEventListener("click", async () => {
       const target = loadGeneratedLinks().find((x) => x.slug === btn.dataset.copyInvite);
       if (!target) return;
-      await navigator.clipboard.writeText(buildWhatsappInviteText(target.name, buildSpaceUrl(target)));
+      await navigator.clipboard.writeText(buildWhatsappInviteText(target.name, buildSpaceUrl(target), target.initialPin));
       btn.textContent = "✓ Invitación copiada";
       setTimeout(() => { btn.textContent = "💬 Invitación"; }, 1800);
     });
@@ -935,6 +1036,7 @@ function renderGeneratedLinks() {
       document.getElementById("genPersonName").value = target.name;
       document.getElementById("genPersonSubtitle").value = target.subtitle || "";
       document.getElementById("genCustomSlug").value = target.slug;
+      document.getElementById("genInitialPin").value = target.initialPin || "";
       document.getElementById("genPersonName")?.focus();
     });
   });
@@ -999,6 +1101,74 @@ document.getElementById("stageModal")?.addEventListener("click", (e) => {
   if (e.target.id === "stageModal") closeModal();
 });
 
+document.getElementById("openPinSettingsBtn")?.addEventListener("click", openPinModal);
+document.getElementById("closePinModal")?.addEventListener("click", closePinModal);
+document.getElementById("pinModal")?.addEventListener("click", (e) => {
+  if (e.target.id === "pinModal") closePinModal();
+});
+
+document.getElementById("unlockForm")?.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const input = document.getElementById("unlockPinInput");
+  const errEl = document.getElementById("unlockError");
+  const entered = (input?.value || "").trim();
+
+  if (entered === String(state.pin)) {
+    isSpaceUnlocked = true;
+    if (errEl) errEl.style.display = "none";
+    if (input) input.value = "";
+    checkLockScreen();
+  } else {
+    if (errEl) errEl.style.display = "block";
+    input?.select();
+  }
+});
+
+document.getElementById("savePinForm")?.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const newPin = (document.getElementById("newPinInput")?.value || "").trim();
+  const confirmPin = (document.getElementById("confirmPinInput")?.value || "").trim();
+  const errEl = document.getElementById("savePinError");
+
+  if (newPin.length < 4) {
+    if (errEl) {
+      errEl.textContent = "El PIN debe tener al menos 4 caracteres.";
+      errEl.style.display = "block";
+    }
+    return;
+  }
+
+  if (newPin !== confirmPin) {
+    if (errEl) {
+      errEl.textContent = "Los dos campos no coinciden. Verifica tu PIN.";
+      errEl.style.display = "block";
+    }
+    return;
+  }
+
+  state.pin = newPin;
+  isSpaceUnlocked = true;
+  if (saveState()) {
+    closePinModal();
+    alert("✓ Tu PIN se ha guardado correctamente para este espacio.");
+  }
+});
+
+document.getElementById("removePinBtn")?.addEventListener("click", () => {
+  if (confirm("¿Seguro que deseas quitar el PIN de este espacio? Cualquiera con acceso a este navegador podrá abrirlo sin contraseña.")) {
+    state.pin = "";
+    isSpaceUnlocked = true;
+    saveState();
+    closePinModal();
+  }
+});
+
+document.getElementById("lockNowBtn")?.addEventListener("click", () => {
+  isSpaceUnlocked = false;
+  closePinModal();
+  checkLockScreen();
+});
+
 document.getElementById("openGuideBtn")?.addEventListener("click", openGuideModal);
 document.getElementById("closeGuideModal")?.addEventListener("click", closeGuideModal);
 document.getElementById("guideDoneBtn")?.addEventListener("click", closeGuideModal);
@@ -1016,6 +1186,7 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") {
     closeModal();
     closeGuideModal();
+    closePinModal();
   }
 });
 
@@ -1135,17 +1306,20 @@ document.getElementById("onboardingForm")?.addEventListener("submit", (e) => {
     spaceId: newId,
     ownerName: name,
     ownerSubtitle: subtitle,
+    initialPin: "",
     needsOnboarding: false
   };
 
   localStorage.setItem(LAST_SPACE_KEY, newId);
   state = {
     profile: { name, subtitle },
+    pin: "",
     memories: [],
     completed: [],
     explored: []
   };
 
+  isSpaceUnlocked = true;
   saveState();
   applyPersonalBranding();
 });
@@ -1170,10 +1344,11 @@ document.getElementById("linkGeneratorForm")?.addEventListener("submit", (e) => 
   const name = document.getElementById("genPersonName")?.value.trim();
   const subtitle = document.getElementById("genPersonSubtitle")?.value.trim();
   const slug = sanitizeSlug(document.getElementById("genCustomSlug")?.value);
+  const initialPin = (document.getElementById("genInitialPin")?.value || "").trim();
 
   if (!name || !slug) return;
 
-  const finalUrl = buildSpaceUrl({ slug, name, subtitle });
+  const finalUrl = buildSpaceUrl({ slug, name, subtitle, initialPin });
 
   const links = loadGeneratedLinks();
   const existingIndex = links.findIndex((item) => item.slug === slug);
@@ -1181,6 +1356,7 @@ document.getElementById("linkGeneratorForm")?.addEventListener("submit", (e) => 
     slug,
     name,
     subtitle,
+    initialPin,
     createdAt: existingIndex >= 0 ? links[existingIndex].createdAt : new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };
@@ -1221,11 +1397,12 @@ document.getElementById("copyGeneratedUrl")?.addEventListener("click", async () 
 document.getElementById("copyWhatsappInvite")?.addEventListener("click", async () => {
   const name = document.getElementById("genPersonName")?.value.trim() || "Hola";
   const url = document.getElementById("generatedUrlOutput")?.value;
+  const initialPin = (document.getElementById("genInitialPin")?.value || "").trim();
   const copyStatus = document.getElementById("copyStatus");
   if (!url) return;
 
   try {
-    await navigator.clipboard.writeText(buildWhatsappInviteText(name, url));
+    await navigator.clipboard.writeText(buildWhatsappInviteText(name, url, initialPin));
     if (copyStatus) copyStatus.textContent = "✓ Invitación completa copiada para WhatsApp";
   } catch {
     if (copyStatus) copyStatus.textContent = "No se pudo copiar automático; usa Copiar enlace.";
@@ -1288,8 +1465,6 @@ const initialDateInput = document.getElementById("memoryDate");
 if (initialDateInput) {
   initialDateInput.value = new Date().toISOString().slice(0, 10);
 }
-
-document.getElementById("anio").textContent = new Date().getFullYear();
 
 applyPersonalBranding();
 renderAll();
